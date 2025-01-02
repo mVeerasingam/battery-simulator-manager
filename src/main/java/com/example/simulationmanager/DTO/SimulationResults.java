@@ -12,6 +12,6 @@ import java.util.Map;
 public class SimulationResults {
     private String task_id;
     private String status;
-    private Map<String, Object> results;
+    private Map<String, Map<String, Object>> results;
     private String error;
 }
