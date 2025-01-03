@@ -11,8 +11,11 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SimulationResults {
+    @JsonProperty("user_id")
+    private String userId;
+
     @JsonProperty("task_id")
-    private String task_id;
+    private String taskId;
 
     private String status;
 

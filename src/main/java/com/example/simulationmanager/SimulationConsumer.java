@@ -23,30 +23,15 @@ public class SimulationConsumer {
     @RabbitListener(queues = "simulation_results")
     public void consumeMessage(String message) {
         try {
+            System.out.println("Received Message: " + message);
             // Deserialize the message into SimulationResults object
             SimulationResults results = objectMapper.readValue(message, SimulationResults.class);
-
-            // Log the received message
-            System.out.println("Received SimulationResults for Task ID: " + results.getTask_id());
-            System.out.println("Status: " + results.getStatus());
-
-            // Get the results as a Map
-            Map<String, Map<String, Object>> resultsMap = results.getResults();
-
-            // Log the results
-            if (resultsMap != null) {
-                resultsMap.forEach((time, data) -> {
-                    System.out.println("Time: " + time);
-                    data.forEach((key, value) -> {
-                        System.out.println("  " + key + ": " + value);
-                    });
-                });
-            }
 
             // Save the results directly to MongoDB
             repository.save(results);  // Save the entire SimulationResults document to MongoDB
 
-            System.out.println("Saved SimulationResult with Task ID: " + results.getTask_id());
+            System.out.println("User ID " + results.getUserId() +
+                    " Saved SimulationResult with Task ID: " + results.getTaskId());
 
         } catch (Exception e) {
             // Handle errors in deserialization and processing

@@ -24,8 +24,6 @@ public class SimulationController {
     @PostMapping("/simulate")
     public String simulate(@RequestBody SimulationRequest simulationRequest) {
         System.out.println("Received SimulationRequest: " + simulationRequest);
-
-        // Call the service to start the simulation
         return simulationService.simulateBattery(simulationRequest);
     }
 }
