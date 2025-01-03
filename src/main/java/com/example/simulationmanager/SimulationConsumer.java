@@ -3,29 +3,39 @@ package com.example.simulationmanager;
 import com.example.simulationmanager.DTO.SimulationResults;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 public class SimulationConsumer {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private final SimulationResultRepository repository;
+
+    @Autowired
+    public SimulationConsumer(SimulationResultRepository repository) {
+        this.repository = repository;
+    }
+
     @RabbitListener(queues = "simulation_results")
     public void consumeMessage(String message) {
         try {
-            // Log the raw message
-            System.out.println("Received message: " + message);
-
-            // Deserialize the message into SimulationResult
+            // Deserialize the message into SimulationResults object
             SimulationResults results = objectMapper.readValue(message, SimulationResults.class);
 
-            // Print the result
-            System.out.println("Task ID: " + results.getTask_id());
+            // Log the received message
+            System.out.println("Received SimulationResults for Task ID: " + results.getTask_id());
             System.out.println("Status: " + results.getStatus());
 
-            // Log the nested results
-            if (results.getResults() != null) {
-                results.getResults().forEach((time, data) -> {
+            // Get the results as a Map
+            Map<String, Map<String, Object>> resultsMap = results.getResults();
+
+            // Log the results
+            if (resultsMap != null) {
+                resultsMap.forEach((time, data) -> {
                     System.out.println("Time: " + time);
                     data.forEach((key, value) -> {
                         System.out.println("  " + key + ": " + value);
@@ -33,11 +43,13 @@ public class SimulationConsumer {
                 });
             }
 
-            if (results.getError() != null) {
-                System.err.println("Error: " + results.getError());
-            }
+            // Save the results directly to MongoDB
+            repository.save(results);  // Save the entire SimulationResults document to MongoDB
+
+            System.out.println("Saved SimulationResult with Task ID: " + results.getTask_id());
 
         } catch (Exception e) {
+            // Handle errors in deserialization and processing
             System.err.println("Failed to process message: " + e.getMessage());
             e.printStackTrace();
         }
