@@ -23,16 +23,14 @@ public class SimulationConsumer {
     @RabbitListener(queues = "simulation_results")
     public void consumeMessage(String message) {
         try {
-            System.out.println("Received Message: " + message);
             // Deserialize the message into SimulationResults object
             SimulationResults results = objectMapper.readValue(message, SimulationResults.class);
 
-            // Save the results directly to MongoDB
-            repository.save(results);  // Save the entire SimulationResults document to MongoDB
+            // Save the results to MongoDB
+            repository.save(results);
 
             System.out.println("User ID " + results.getUserId() +
                     " Saved SimulationResult with Task ID: " + results.getTaskId());
-
         } catch (Exception e) {
             // Handle errors in deserialization and processing
             System.err.println("Failed to process message: " + e.getMessage());
