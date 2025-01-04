@@ -25,12 +25,24 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=simulationDB
 
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
+    networks:
+      - battery_simulator_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   battery_simulator:
     container_name: batterySimulationAPI
     image: batterysimulator:latest
     ports:
       - "8084:8084"
-    command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8084", "--reload"]
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
     networks:
@@ -65,9 +77,37 @@ services:
     depends_on:
       - rabbitmq
       - mongodb
+      - postgres
+
+  user_creation_battery_simulator:
+    image: user_creation_battery_simulator:latest
+    container_name: user_creation
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=mysecretpassword
+      - SPRING_DATASOURCE_DRIVER-CLASS-NAME=org.postgresql.Driver
+      - SPRING_JPA_DATABASE-PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_HIBERNATE_DDL-AUTO=update
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+      - spring.rabbitmq.host=localhost
+      - spring.rabbitmq.port=5672
+      - spring.rabbitmq.username=guest
+      - spring.rabbitmq.password=guest
+    networks:
+      - battery_simulator_network
+    depends_on:
+      - postgres
+      - rabbitmq
 
 volumes:
   mongodb_data:
+  postgres_data:
 
 networks:
   battery_simulator_network:
