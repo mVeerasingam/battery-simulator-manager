@@ -11,12 +11,14 @@ import java.util.UUID;
 public class SimulationService {
     private SimulationClient simulationClient;
     private final RabbitTemplate rabbitTemplate;
+    private final SimulationRequestRepository repository;
 
 
     @Autowired
-    public SimulationService(SimulationClient simulationClient, RabbitTemplate rabbitTemplate) {
+    public SimulationService(SimulationClient simulationClient, RabbitTemplate rabbitTemplate, SimulationRequestRepository repository) {
         this.simulationClient = simulationClient;
         this.rabbitTemplate = rabbitTemplate;
+        this.repository = repository;
     }
 
     public String simulateBattery(SimulationRequest simulationRequest) {
@@ -31,6 +33,10 @@ public class SimulationService {
 
         System.out.println("Sending simulation request with task_id: " + simulationRequest.getTaskId() +
                 " with user_id " + simulationRequest.getUserId());
+
+        System.out.println("Saving SimulationRequest task_id: " + simulationRequest.getTaskId() + "for user_id: " + simulationRequest.getUserId() );
+        repository.save(simulationRequest);
+
         return simulationClient.runSimulation(simulationRequest);
     }
 }

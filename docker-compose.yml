@@ -13,7 +13,7 @@ services:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
 
-  mongodb:
+  mongodb_simulation_results:
     container_name: mongodb
     image: mongo:latest
     ports:
@@ -21,9 +21,21 @@ services:
     networks:
       - battery_simulator_network
     volumes:
-      - mongodb_data:/data/db
+      - mongodb_data_simulation_results:/data/db
     environment:
-      - MONGO_INITDB_DATABASE=simulationDB
+      - MONGO_INITDB_DATABASE=simulationResultsDB
+
+  mongodb_simulationManager:
+    container_name: mongodb_simulationManager
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    networks:
+      - battery_simulator_network
+    volumes:
+      - mongodb_data_simulation_manager:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=simulationManagerDB
 
   postgres:
     image: postgres:latest
@@ -70,13 +82,13 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/simulationDB
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb_simulationManager:27017/simulationManagerDB
       - producer.enabled=true
     networks:
       - battery_simulator_network
     depends_on:
       - rabbitmq
-      - mongodb
+      - mongodb_simulationManager
       - postgres
 
   user_creation_battery_simulator:
@@ -95,22 +107,15 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
-      - spring.rabbitmq.host=localhost
-      - spring.rabbitmq.port=5672
-      - spring.rabbitmq.username=guest
-      - spring.rabbitmq.password=guest
     networks:
       - battery_simulator_network
     depends_on:
       - postgres
       - rabbitmq
 
-  simulation_notification:
+  simulation_results:
     container_name: simulationNotificationService
     image: simulation_notification_service:latest
-    depends_on:
-      - rabbitmq
-      - mongodb
     ports:
       - "8082:8082"
     environment:
@@ -118,12 +123,16 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
-      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/simulationDB
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb_simulation_results:27017/simulationResultsDB
     networks:
       - battery_simulator_network
+    depends_on:
+      - rabbitmq
+      - mongodb_simulation_results
 
 volumes:
-  mongodb_data:
+  mongodb_data_simulation_manager:
+  mongodb_data_simulation_results:
   postgres_data:
 
 networks:
