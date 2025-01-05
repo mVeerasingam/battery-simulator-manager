@@ -7,11 +7,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfig {
-//    @Bean
-//    public Queue simulationResultsQueue() {
-//        return new Queue("simulation_results", true);
-//    }
-
     @Bean
     public Queue userValidationRequestQueue() {
         return new Queue("user_validation_request", true);
