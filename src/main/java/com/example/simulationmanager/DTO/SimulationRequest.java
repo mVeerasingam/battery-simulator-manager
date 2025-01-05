@@ -11,6 +11,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SimulationRequest {
+    @JsonProperty("user_id")
+    private String userId;
+
+    @JsonProperty("task_id")
+    private String taskId;
+
     @JsonProperty("equivalent_circuit_model")
     private EquivalentCircuitModel equivalentCircuitModel;
 
