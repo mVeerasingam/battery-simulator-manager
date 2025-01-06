@@ -26,9 +26,9 @@ public class SimulationService {
         if (simulationRequest.getTaskId() == null) {
             simulationRequest.setTaskId(UUID.randomUUID().toString());
         }
+        String userId = simulationRequest.getUserId();
 
         // Send user validation request to the exchange
-        String userId = simulationRequest.getUserId();
         rabbitTemplate.convertAndSend("user_validation_exchange", "user.validation.request", userId);
 
         System.out.println("Sending simulation request with task_id: " + simulationRequest.getTaskId() +
