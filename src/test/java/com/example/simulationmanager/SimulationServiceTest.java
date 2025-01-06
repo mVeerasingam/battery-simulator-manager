@@ -35,7 +35,7 @@ class SimulationServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Prepare the SimulationRequest with all fields as in the provided test
+        // Prepare the SimulationRequest
         simulationRequest = new SimulationRequest();
 
         EquivalentCircuitModel equivalentCircuitModel = new EquivalentCircuitModel();
@@ -61,7 +61,7 @@ class SimulationServiceTest {
                 "Rest for 30 minutes",
                 "Rest for 1 hour"
         ));
-        simulation.setT_eval(Arrays.asList(0, 3600));
+        simulation.setT_eval(Arrays.asList(0, 3600)); // 1hr simulation
         simulationRequest.setSimulation(simulation);
 
         simulationRequest.setDisplayParams(Arrays.asList("Voltage [V]", "Current [A]", "Jig temperature [K]"));
@@ -69,7 +69,7 @@ class SimulationServiceTest {
 
     @Test
     void testSimulateBattery() {
-        // Mocking the void method with doNothing
+        // Mocking the void method with doNothing bypass rabiitMQ
         doNothing().when(rabbitTemplate).convertAndSend(anyString(), anyString(), anyString());
 
         when(simulationClient.runSimulation(any(SimulationRequest.class))).thenReturn("Success");
