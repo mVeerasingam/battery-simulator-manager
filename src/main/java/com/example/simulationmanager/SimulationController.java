@@ -36,15 +36,15 @@ public class SimulationController {
         return ResponseEntity.ok(simulations);
     }
 
-    @GetMapping("/{taskId}/user/{userId}")
+    @GetMapping("/user/{userId}/task/{taskId}")
     public ResponseEntity<SimulationRequest> getSimulationByTaskIdAndUserId(@PathVariable String taskId, @PathVariable String userId) {
-        Optional<SimulationRequest> simulationRequest = managerService.getSimulationByTaskIdAndUserId(taskId, userId);
-        return simulationRequest.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        Optional<SimulationRequest> simulation = managerService.getSimulationByTaskIdAndUserId(taskId, userId);
+        return simulation.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{taskId}/user/{userId}")
-    public ResponseEntity<Void> deleteSimulation(@PathVariable String taskId, @PathVariable String userId) {
-        boolean deleted = managerService.deleteSimulation(taskId, userId);
+    @DeleteMapping("/user/{userId}/task/{taskId}")
+    public ResponseEntity<Void> deleteSimulation(@PathVariable String userId, @PathVariable String taskId) {
+        boolean deleted = managerService.deleteSimulation(userId, taskId);
         if (deleted) {
             return ResponseEntity.noContent().build();
         }
