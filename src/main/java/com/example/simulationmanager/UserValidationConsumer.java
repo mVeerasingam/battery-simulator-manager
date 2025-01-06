@@ -22,8 +22,7 @@ public class UserValidationConsumer {
         if ("Valid".equalsIgnoreCase(response)) {
             System.out.println("User validation successful. Proceeding with simulation.");
         } else {
-//            System.out.println("User validation failed. Cannot proceed with simulation.");
-            throw new RuntimeException("User validation failed. Cannot proceed with simulation.");
+            System.out.println("User validation failed. Cannot proceed with simulation.");
         }
     }
 }
