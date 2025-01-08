@@ -90,8 +90,55 @@ Default Ports Specified:
 - DELETE ```http://localhost:8085/users/{user_id}``` deletes a user from the database
 - PUT ```http://localhost:8085/users/{user_id}``` updates a users details by user_id
 
+### **Tests Overview for User Creation Service**
+#### **1. Unit Test: UserServiceTest**
+The `UserServiceTest` validates core functionalities, including user creation, duplicate user detection, and user retrieval.
+
+---
+
+#### **Test Case: User Creation**
+- **Objective**: Validate successful creation of a new user account.
+- **Key Assertions**:
+  - Ensures the user is saved in the repository.
+  - Confirms that the created user has the correct email and username.
+  - Verifies that the repository's `save` method is called once.
+
+---
+
+#### **Test Case: Duplicate User Creation by Email**
+- **Objective**: Handle cases where a user with the same email already exists.
+- **Key Assertions**:
+  - Ensures `UserAlreadyExistsException` is thrown with the appropriate message.
+  - Verifies that the repository's `save` method is **not** called for duplicate emails.
+
+---
+
+#### **Test Case: Duplicate User Creation by Username**
+- **Objective**: Handle cases where a user with the same username already exists.
+- **Key Assertions**:
+  - Ensures `UserAlreadyExistsException` is thrown with the appropriate message.
+  - Verifies that the repository's `save` method is **not** called for duplicate usernames.
+
+---
+
+#### **Test Case: Retrieve User by Valid ID**
+- **Objective**: Validate the retrieval of an existing user by their ID.
+- **Key Assertions**:
+  - Ensures the retrieved user matches the expected details (ID and email).
+  - Confirms that the repository's `findById` method returns the user.
+
+---
+
+#### **Test Case: Retrieve User by Invalid ID**
+- **Objective**: Handle cases where a user with the given ID does not exist.
+- **Key Assertions**:
+  - Ensures `UserNotFoundException` is thrown with the correct message.
+  - Confirms that the repository's `findById` method returns an empty result for non-existent users.
+
+---
+
 ## **Simulation Manager Microservice**: 
-- Sends a Post request to the **Battery Simulation API Microservice** via ```http://localhost:8080/simulations```
+- Sends a Post request to the **Battery Simulation API Microservice** via POST ```http://localhost:8080/simulations```
 - Example Post Request Body:
    - ```
      {
@@ -128,7 +175,49 @@ Default Ports Specified:
 - You can access your simulation requests with the following urls:
    - GET ```http://localhost:8080/simulations/user/{user_id}/task/{task_id}``` For a specific simulation generated for a given user
    - GET ```http://localhost:8080/simulations/user/{user_id}``` All simulations generated for a given user
-- Do not be afraid of producing errors in the post request i.e. incorrect simulation experiment or invalid solver, display_params etc... a request will still be made and the **Simulation Notification Microservice** will inform you of the failure by taking the errors produced in the simulation from  the **Battery Simulation API Microservice**. 
+- Do not be afraid of producing errors in the post request i.e. incorrect simulation experiment or invalid solver, display_params etc... a request will still be made and the **Simulation Notification Microservice** will inform you of the failure by taking the errors produced in the simulation from  the **Battery Simulation API Microservice**.
+
+### **Test Overview for Simulation Manager Microservice**:
+---
+#### **1. Integration Test: SimulationControllerIntegrationTest**
+This test verifies the integration between the controller, RabbitMQ, and the repository by simulating a full battery simulation request.
+
+- **Objective**: Ensure the complete flow of a simulation request from the API endpoint (`/simulations`) works correctly. 
+- **Key Assertions**:
+  - Validates the API returns a successful response when a valid simulation request is made.
+  - Confirms RabbitMQ is invoked to validate the user ID.
+  - Checks that the simulation request is stored in MongoDB.
+  - Mocks interaction with the Battery Simulation API microservice to simulate external dependencies.
+---
+
+#### **2. Unit Test: SimulationRequestTest**
+---
+This test validates the serialization and structure of the `SimulationRequest` object.
+
+- **Objective**: Ensure the `SimulationRequest` object can be correctly serialized into JSON format.
+- **Key Actions**:
+  - Constructs a sample simulation request with predefined values for equivalent circuit model, parameters, solver, and experiment setup.
+  - Serializes the request into a JSON string and outputs it for verification.
+- **Use Case**: Useful for debugging and ensuring the API's payload structure matches the expectations of downstream services.
+---
+
+#### **3. Service Test: SimulationServiceTest**
+---
+This test validates the core logic of the `SimulationService`, including interactions with RabbitMQ, the repository, and the Battery Simulation API microservice.
+
+- **Test Case: Simulate Battery**:
+  - **Objective**: Ensure the `simulateBattery` method correctly handles a simulation request.
+  - **Key Assertions**:
+    - The simulation request is passed to the Battery Simulation API microservice.
+    - RabbitMQ is invoked to send user validation messages.
+    - The simulation request is saved to MongoDB.
+
+- **Test Case: Simulate Battery with Task ID Generation**:
+  - **Objective**: Verify that a `taskId` is correctly generated if missing in the request.
+  - **Key Assertions**:
+    - Ensures `taskId` is generated and set for the simulation request.
+    - Validates the response returned by the Battery Simulation API microservice.
+---
  
 ## **Battery Simulation API Microservice**:
 - This is a python based battery simulation api microservice that generates a battery through equivalent circuit modelling in PyBaMM (python battery mathamatical modelling)
@@ -141,3 +230,59 @@ Default Ports Specified:
 - Once a simulation in complete, regardless if the simulation was succesful or not, it's saved to ```mongodb://mongodb_simulation_results:27017/simulationResultsDB```
 - GET ```http://localhost:8082/simulations/user/{user_id}/task/{task_id}``` retrieves a specific simulation for a given user
 - GET ```http://localhost:8082/simulations/user/{user_id}``` retrieves all simulations performed for a given user
+
+### **Tests Overview for Simulation Notification Service**
+
+The Simulation Notification Service tests validate the functionality of handling simulation notifications, including retrieval, saving, and deletion of simulation results for a user.
+
+---
+
+#### **1. Unit Test: SimulationNotificationServiceTest**
+The `SimulationNotificationServiceTest` ensures the notification service behaves as expected when interacting with the repository for managing simulation results.
+
+---
+
+#### **Test Case: Get Simulations by User**
+- **Objective**: Retrieve all simulation results associated with a specific user.
+- **Key Assertions**:
+  - Ensures the correct number of simulations is returned for the user.
+  - Confirms the task ID of the retrieved simulation matches expectations.
+  - Verifies the repository's `findByUserId` method is called once.
+
+---
+
+#### **Test Case: Get Simulation by Task ID and User ID**
+- **Objective**: Retrieve a specific simulation result by task ID and user ID.
+- **Key Assertions**:
+  - Ensures the returned simulation result is not null.
+  - Confirms the retrieved simulation's status matches the expected value (`"Completed"`).
+  - Verifies the repository's `findByUserIdAndTaskId` method is called once.
+
+---
+
+#### **Test Case: Save Simulation**
+- **Objective**: Save a new simulation result to the repository.
+- **Key Assertions**:
+  - Ensures the saved simulation is not null.
+  - Confirms the task ID of the saved simulation matches the expected value.
+  - Verifies the repository's `save` method is called once.
+
+---
+
+#### **Test Case: Delete Simulation**
+- **Objective**: Delete an existing simulation result for a specific task ID and user ID.
+- **Key Assertions**:
+  - Ensures the deletion operation returns a successful result (`true`).
+  - Verifies the repository's `findByUserIdAndTaskId` method is called to locate the simulation.
+  - Confirms the repository's `delete` method is called once to remove the simulation.
+
+---
+
+#### **Mocked Interactions and Dependencies**
+The tests rely on the following mocked dependencies:
+- **`SimulationResultsRepository`**:
+  - Mocked to simulate data retrieval, saving, and deletion operations for simulation results.
+- **Service Logic**:
+  - Ensures proper handling of CRUD operations and their outcomes.
+
+---
